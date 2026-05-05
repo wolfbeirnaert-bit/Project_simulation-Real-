@@ -684,7 +684,7 @@ class Simulation:
         weekly_ov = []
         for w in range(self.W):
             # We use the appointment WT + scan WT for elective patients
-            el_wt = self.movingAvgElectiveAppWT[w] + self.movingAvgElectiveScanWT[w]
+            el_wt = self.movingAvgElectiveAppWT[w]
             ur_wt = self.movingAvgUrgentScanWT[w]
             ov = el_wt * self.weightEl + ur_wt * self.weightUr
             weekly_ov.append(ov)

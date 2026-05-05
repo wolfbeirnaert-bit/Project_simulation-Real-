@@ -1,0 +1,445 @@
+\documentclass[12pt, a4paper]{article}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{geometry}
+\geometry{a4paper, margin=2.5cm}
+
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{parskip}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins}
+
+% ── Colours ───────────────────────────────────────────────────────────────────
+\definecolor{ugblue}{HTML}{1a3a5c}
+\definecolor{lightblue}{HTML}{2e6da4}
+\definecolor{rowgray}{HTML}{f5f5f5}
+
+% ── Hyperref ──────────────────────────────────────────────────────────────────
+\hypersetup{
+    colorlinks=true,
+    linkcolor=lightblue,
+    urlcolor=lightblue,
+    citecolor=lightblue,
+    pdftitle={Reorganisation of an Outpatient Radiology Department},
+    pdfauthor={Simulation Modelling and Analysis 2025-2026},
+}
+
+% ── Section formatting ────────────────────────────────────────────────────────
+\titleformat{\section}{\large\bfseries\color{ugblue}}{\thesection.}{0.6em}{}[\vspace{-0.3em}\textcolor{ugblue}{\rule{\linewidth}{0.8pt}}]
+\titleformat{\subsection}{\normalsize\bfseries\color{lightblue}}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}{\normalsize\itshape\color{lightblue}}{\thesubsubsection.}{0.5em}{}
+
+% ── Header / footer ───────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{gray}Reorganisation of an Outpatient Radiology Department}
+\fancyhead[R]{\small\color{gray}SMA 2025--2026}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Recommendation box ────────────────────────────────────────────────────────
+\newtcolorbox{recbox}{
+    enhanced,
+    colback=ugblue!8,
+    colframe=ugblue,
+    boxrule=1pt,
+    arc=3pt,
+    left=8pt, right=8pt, top=6pt, bottom=6pt,
+    fontupper=\itshape\color{ugblue},
+}
+
+% ── Table row colours ─────────────────────────────────────────────────────────
+\usepackage{colortbl}
+\newcommand{\headerrow}{\rowcolor{ugblue}\color{white}}
+\newcommand{\altrow}{\rowcolor{rowgray}}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+
+% ── Cover page ────────────────────────────────────────────────────────────────
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\fontsize{28}{34}\selectfont\bfseries\color{ugblue}
+        Reorganisation of an\\[4pt] Outpatient Radiology\\[4pt] Department\par}
+    \vspace{0.8cm}
+    \textcolor{ugblue}{\rule{0.7\linewidth}{1.5pt}}
+    \vspace{0.6cm}
+
+    {\large Simulation Modelling and Analysis (F000941)}\\[4pt]
+    {\large Academic Year 2025--2026}\\[4pt]
+    {\large Prof.\ Broos Maenhout}
+
+    \vfill
+    {\normalsize Ghent University --- Master of Science in Management of Operations}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Introduction}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{System Description}
+
+In this project, we analyze and improve the performance of an outpatient radiology department using discrete-event simulation. The department currently uses a cyclic appointment schedule with 146 elective slots and a variable number of urgent slots. Elective patients arrive according to appointments (with potential unpunctuality and no-shows), while urgent patients arrive unannounced throughout the day. The goal of this study is to minimize the weighted waiting times for both urgent and elective patients by redesigning the capacity distribution (urgent vs.\ elective slots) and the timing of urgent slots.
+
+The simulation operates on a weekly cyclic schedule. The department is open Monday to Saturday, with Thursday and Saturday being half-day sessions. Each day is divided into time slots of 15~minutes. Resources (nurses, doctors) are assumed to be always available.
+
+\subsection{Overview of Research Test Design}
+
+The study evaluates the system by varying three main factors:
+\begin{enumerate}[leftmargin=2cm]
+    \item \textbf{Urgent Slot Capacity:} Ranging between 10 and 17 slots. Configurations with 18 or more urgent slots were excluded from the experimental design following our preliminary analysis, which revealed that these configurations push the system beyond its capacity limits (see Section~\ref{sec:variance}).
+    \item \textbf{Timing Strategy:} Three strategies for distributing urgent slots over the day/week.
+    \item \textbf{Appointment Rules:} Four different single-pass appointment scheduling rules.
+\end{enumerate}
+
+Our analysis proceeds through several statistical phases: establishing steady-state behaviour (warm-up), determining batch means parameters for independent sampling, applying variance reduction (Antithetic Variables), executing a full-factorial screening design across all 96 valid configurations, and a comparative analysis to identify the best system configuration.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Statistical Analysis \& Warm-up}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Welch's Method and Warm-up Period}
+
+Before applying the Batch Means Method, it is essential to determine and remove the initial warm-up period to eliminate transient initialization bias. We applied Welch's method across 10 distinct representative experimental designs, chosen to ensure a diverse mix of urgent slots, scheduling rules, and timing strategies.
+
+By plotting the moving average of the objective function for these designs, we visually identified the point at which output stabilized. Configurations operating at near-full capacity (such as those with 18 urgent slots) were excluded from this baseline determination, as their extreme instability skews the steady-state convergence.
+
+Based on the worst-case convergence observed, we identified a cutoff of approximately 63~weeks. To maintain robustness across the majority of our experiments, we conservatively selected a universal warm-up period of $\mathbf{W_{\text{warmup}} = 60}$~\textbf{weeks}. This removes initialization bias for approximately 90\% of our tested scenarios.
+
+\subsection{Batch Means Method}
+
+To conduct a statistically valid steady-state analysis, we applied the Batch Means Method. Because consecutive simulation outputs are autocorrelated, the batch means method groups observations into batches to form approximately independent data points.
+
+Based on worst-case autocorrelation analysis, we determined:
+\begin{itemize}
+    \item \textbf{Batch size} $M = 80$ weeks (lag-based correlation falls below 0.01)
+    \item \textbf{Number of batches} $L = 22$ (sufficient for target precision)
+\end{itemize}
+
+This yields a total simulation run length of:
+\[
+    W_{\text{total}} = W_{\text{warmup}} + L \times M = 60 + 22 \times 80 = 1820 \text{ weeks}
+\]
+
+To establish a baseline of natural system variance, we first simulated 11 representative experimental designs. Table~\ref{tab:bmm_baseline} summarises the 95\% confidence intervals and precision metrics.
+
+\begin{table}[ht]
+\centering
+\caption{Batch Means Method results for 11 representative designs (standard run).}
+\label{tab:bmm_baseline}
+\small
+\begin{tabular}{lccccccc}
+\toprule
+\headerrow
+\textbf{Design} & $\bar{D}$ & $S^2$ & $S$ & $\epsilon$ & \textbf{95\% CI} & \textbf{CV} & $\gamma$ \\
+\midrule
+S1-U14-R1 & 0.4783 & 0.0011 & 0.0339 & 0.0150 & [0.4633 ; 0.4933] & 0.0709 & 0.0314 \\
+\altrow S1-U18-R4 & 0.9140 & 0.0659 & 0.2567 & 0.1138 & [0.8002 ; 1.0278] & 0.2809 & 0.1245 \\
+S3-U17-R2 & 0.5838 & 0.0214 & 0.1462 & 0.0648 & [0.5190 ; 0.6486] & 0.2503 & 0.1110 \\
+\altrow S1-U11-R3 & 0.4514 & 0.0003 & 0.0167 & 0.0074 & [0.4440 ; 0.4588] & 0.0369 & 0.0164 \\
+S2-U17-R2 & 0.6527 & 0.0220 & 0.1484 & 0.0658 & [0.5869 ; 0.7185] & 0.2274 & 0.1008 \\
+\altrow S3-U14-R3 & 0.4487 & 0.0011 & 0.0326 & 0.0145 & [0.4342 ; 0.4631] & 0.0727 & 0.0322 \\
+S3-U17-R3 & 0.5863 & 0.0215 & 0.1466 & 0.0650 & [0.5214 ; 0.6513] & 0.2500 & 0.1108 \\
+\altrow S3-U13-R3 & 0.4317 & 0.0006 & 0.0242 & 0.0107 & [0.4209 ; 0.4424] & 0.0562 & 0.0249 \\
+S1-U14-R4 & 0.4769 & 0.0012 & 0.0341 & 0.0151 & [0.4618 ; 0.4920] & 0.0714 & 0.0317 \\
+\altrow S2-U16-R1 & 0.5787 & 0.0059 & 0.0768 & 0.0341 & [0.5446 ; 0.6127] & 0.1328 & 0.0589 \\
+S2-U13-R4 & 0.5233 & 0.0007 & 0.0262 & 0.0116 & [0.5117 ; 0.5349] & 0.0500 & 0.0222 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The results indicate that while some configurations (e.g., S1-U11-R3, $\gamma = 1.64\%$) are highly stable, others (e.g., S1-U18-R4, $\gamma = 12.45\%$) exhibit substantial natural variance, highlighting the necessity of variance reduction techniques.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Variance Reduction}
+\label{sec:variance}
+% ─────────────────────────────────────────────────────────────────────────────
+
+To obtain more accurate estimates without increasing computational burden, we implemented variance reduction using \textbf{Antithetic Variables}. For every standard simulation batch generated using random number sequence $U$, we generated an antithetic counterpart using $1-U$. These paired outputs are negatively correlated. By averaging both runs:
+\[
+    Y_k = \frac{X_k + X'_k}{2}
+\]
+the overall variance is substantially reduced.
+
+Table~\ref{tab:bmm_antithetic} shows the BMM results for the same 11 representative designs after applying antithetic variates.
+
+\begin{table}[ht]
+\centering
+\caption{Batch Means Method results for 11 representative designs (antithetic run, $Y_k = (X_k + X'_k)/2$).}
+\label{tab:bmm_antithetic}
+\small
+\begin{tabular}{lccccccc}
+\toprule
+\headerrow
+\textbf{Design} & $\bar{Y}$ & $S^2_Y$ & $S_Y$ & $\epsilon$ & \textbf{95\% CI} & \textbf{CV} & $\gamma$ \\
+\midrule
+S1-U14-R1  & 0.4880 & 0.0006 & 0.0240 & 0.0106 & [0.4774 ; 0.4986] & 0.0491 & 0.0218 \\
+\altrow S1-U18-R4  & 2.3740 & 0.8888 & 0.9428 & 0.4180 & [1.9560 ; 2.7920] & 0.3971 & 0.1761 \\
+S3-U17-R2  & 0.7391 & 0.0509 & 0.2256 & 0.1000 & [0.6391 ; 0.8391] & 0.3052 & 0.1353 \\
+\altrow S1-U11-R3  & 0.4565 & 0.0001 & 0.0085 & 0.0038 & [0.4528 ; 0.4603] & 0.0186 & 0.0082 \\
+S2-U17-R2  & 0.8084 & 0.0515 & 0.2268 & 0.1006 & [0.7078 ; 0.9090] & 0.2806 & 0.1244 \\
+\altrow S3-U14-R3  & 0.4593 & 0.0006 & 0.0240 & 0.0106 & [0.4486 ; 0.4699] & 0.0523 & 0.0232 \\
+S3-U17-R3  & 0.7418 & 0.0510 & 0.2259 & 0.1001 & [0.6417 ; 0.8420] & 0.3045 & 0.1350 \\
+\altrow S3-U13-R3  & 0.4390 & 0.0002 & 0.0155 & 0.0069 & [0.4321 ; 0.4459] & 0.0353 & 0.0157 \\
+S1-U14-R4  & 0.4865 & 0.0006 & 0.0241 & 0.0107 & [0.4759 ; 0.4972] & 0.0495 & 0.0219 \\
+\altrow S2-U16-R1  & 0.6272 & 0.0075 & 0.0867 & 0.0384 & [0.5888 ; 0.6657] & 0.1382 & 0.0613 \\
+S2-U13-R4  & 0.5298 & 0.0003 & 0.0164 & 0.0073 & [0.5225 ; 0.5371] & 0.0310 & 0.0138 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Impact on Stable Systems}
+
+For configurations not pushing the system to capacity limits (11--14 urgent slots), antithetic pairing successfully halved the variance. For example:
+\begin{itemize}
+    \item \textbf{S1-U11-R3}: variance dropped from 0.0003 to 0.0001; $\gamma$ improved from 1.64\% to 0.82\%.
+    \item \textbf{S1-U14-R1}: variance dropped from 0.0011 to 0.0006; $\gamma$ improved from 3.14\% to 2.18\%.
+\end{itemize}
+
+\subsection{Heavily Loaded Systems and the Exclusion of High Urgent Slot Counts}
+
+The variance reduction technique exposed a critical vulnerability in heavily-loaded configurations. For \textbf{S1-U18-R4}, the standard mean was 0.9140. When the antithetic run was executed, the combined mean skyrocketed to 2.3740, with variance increasing rather than decreasing.
+
+This occurs because queue waiting times are \textit{convex} relative to system utilization. When the antithetic sequence generates shorter inter-arrival times and longer service times simultaneously, an already saturated queue breaks down entirely, driving waiting times toward infinity. This is empirical proof that configurations with 18 or more urgent slots are \textbf{fundamentally unstable}. Consequently, urgent slot counts of 18, 19, and 20 were excluded from the full experimental design.
+
+\subsection{Confidence Interval Estimation}
+
+Since we estimate the population mean from $n = L = 22$ batches, we use the $t$-distribution:
+\[
+    CI = \left[\bar{Y} - t_{\alpha/2,\, n-1} \cdot \frac{S_Y}{\sqrt{n}} \;;\; \bar{Y} + t_{\alpha/2,\, n-1} \cdot \frac{S_Y}{\sqrt{n}}\right]
+\]
+
+For design \textbf{S1-U14-R1} after antithetic reduction ($\bar{Y} = 0.4880$, $S_Y = 0.0240$, $t_{0.025,21} \approx 2.0796$):
+\[
+    CI = \left[0.4880 - 2.0796 \cdot \frac{0.0240}{\sqrt{22}} \;;\; 0.4880 + 2.0796 \cdot \frac{0.0240}{\sqrt{22}}\right] = [0.4774 \;;\; 0.4986]
+\]
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Experimental Design (Screening)}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Objective Function}
+
+The primary objective function to be minimized is:
+\[
+    \text{Minimize} \quad w_e \cdot \overline{Wt_e} + w_u \cdot \overline{Wt_u}
+\]
+where:
+\begin{itemize}
+    \item $w_e = 1/168$: weight for elective \textit{appointment} waiting time (normalized by 1 week = 168 hours)
+    \item $w_u = 1/9$: weight for urgent \textit{scan} waiting time (normalized by 9 hours)
+    \item $\overline{Wt_e}$: average elective appointment waiting time (hours)
+    \item $\overline{Wt_u}$: average urgent scan waiting time (hours)
+\end{itemize}
+
+Elective scan waiting time and overtime are \textit{secondary} objectives, used only for tiebreaking.
+
+\subsection{Full-Factorial Design}
+
+We conducted a full-factorial screening design covering:
+\begin{itemize}
+    \item \textbf{3 timing strategies}: Strategy~1 (end-of-block), Strategy~2 (evenly distributed), Strategy~3 (after every 6 elective slots)
+    \item \textbf{8 urgent slot counts}: 10, 11, 12, 13, 14, 15, 16, 17
+    \item \textbf{4 appointment scheduling rules}: Rule~1 (Plain FCFS), Rule~2 (Bailey-Welch, $K=2$), Rule~3 (Blocking, $B=2$), Rule~4 (Benchmarking, $k_\sigma=0.5$)
+\end{itemize}
+
+This yields $3 \times 8 \times 4 = \mathbf{96}$ designs. Each was evaluated using the Batch Means Method with antithetic variates ($W_{\text{warmup}}=60$, $M=80$, $L=22$, seed~$=42$).
+
+\subsection{Screening Results}
+
+Table~\ref{tab:top20} presents the top 20 designs ranked by average objective value $\bar{Y}$. The complete results for all 96 designs are available in \texttt{full\_sweep\_antithetic.csv}.
+
+\begin{table}[ht]
+\centering
+\caption{Top 20 designs from the full-factorial screening (antithetic BMM, $L=22$, $M=80$).}
+\label{tab:top20}
+\small
+\begin{tabular}{clccccccc}
+\toprule
+\headerrow
+\textbf{Rank} & \textbf{Design} & \textbf{Strat.} & \textbf{Urg.} & \textbf{Rule} & $\bar{Y}$ & $\epsilon$ & \textbf{95\% CI} \\
+\midrule
+1  & S3-U11-R4 & 3 & 11 & 4 & 0.4311 & 0.0040 & [0.4271 ; 0.4352] \\
+\altrow 2  & S3-U11-R2 & 3 & 11 & 2 & 0.4321 & 0.0040 & [0.4280 ; 0.4361] \\
+3  & S3-U11-R1 & 3 & 11 & 1 & 0.4325 & 0.0040 & [0.4284 ; 0.4365] \\
+\altrow 4  & S3-U11-R3 & 3 & 11 & 3 & 0.4344 & 0.0041 & [0.4304 ; 0.4385] \\
+5  & S3-U13-R4 & 3 & 13 & 4 & 0.4357 & 0.0069 & [0.4288 ; 0.4425] \\
+\altrow 6  & S3-U13-R2 & 3 & 13 & 2 & 0.4366 & 0.0068 & [0.4297 ; 0.4434] \\
+7  & S3-U13-R1 & 3 & 13 & 1 & 0.4371 & 0.0068 & [0.4302 ; 0.4439] \\
+\altrow 8  & S3-U12-R4 & 3 & 12 & 4 & 0.4378 & 0.0050 & [0.4328 ; 0.4428] \\
+9  & S3-U12-R2 & 3 & 12 & 2 & 0.4389 & 0.0050 & [0.4339 ; 0.4440] \\
+\altrow 10 & S3-U13-R3 & 3 & 13 & 3 & 0.4390 & 0.0069 & [0.4321 ; 0.4459] \\
+11 & S3-U12-R1 & 3 & 12 & 1 & 0.4392 & 0.0050 & [0.4342 ; 0.4441] \\
+\altrow 12 & S3-U12-R3 & 3 & 12 & 3 & 0.4413 & 0.0051 & [0.4362 ; 0.4464] \\
+13 & S3-U10-R4 & 3 & 10 & 4 & 0.4427 & 0.0035 & [0.4392 ; 0.4462] \\
+\altrow 14 & S3-U10-R2 & 3 & 10 & 2 & 0.4438 & 0.0035 & [0.4402 ; 0.4473] \\
+15 & S3-U10-R1 & 3 & 10 & 1 & 0.4440 & 0.0035 & [0.4405 ; 0.4476] \\
+\altrow 16 & S3-U10-R3 & 3 & 10 & 3 & 0.4461 & 0.0036 & [0.4425 ; 0.4496] \\
+17 & S1-U11-R2 & 1 & 11 & 2 & 0.4529 & 0.0037 & [0.4491 ; 0.4566] \\
+\altrow 18 & S1-U11-R4 & 1 & 11 & 4 & 0.4532 & 0.0037 & [0.4495 ; 0.4570] \\
+19 & S1-U11-R1 & 1 & 11 & 1 & 0.4547 & 0.0037 & [0.4510 ; 0.4585] \\
+\altrow 20 & S3-U14-R4 & 3 & 14 & 4 & 0.4559 & 0.0106 & [0.4453 ; 0.4665] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Key Observations}
+
+\subsubsection{Observation 1 — Strategy 3 dominates}
+
+The entire top 16 positions are occupied by Strategy~3 designs. The first non-Strategy-3 design appears only at rank 17 (S1-U11-R2, $\bar{Y} = 0.4529$). Strategy~2 is clearly the worst-performing strategy.
+
+\begin{table}[ht]
+\centering
+\caption{Best and worst objective value per strategy.}
+\label{tab:per_strategy}
+\small
+\begin{tabular}{clcc}
+\toprule
+\headerrow \textbf{Strategy} & \textbf{Best Design} & \textbf{Best OV} & \textbf{Worst OV} \\
+\midrule
+1 & S1-U11-R2 & 0.4529 & 0.7883 \\
+\altrow 2 & S2-U13-R4 & 0.5298 & 0.8113 \\
+3 & S3-U11-R4 & 0.4311 & 0.7418 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Observation 2 — 11 urgent slots is the optimal capacity allocation}
+
+Within Strategy~3, the best objective values are consistently achieved with 11 urgent slots. The OV increases as the number of urgent slots deviates from this optimum in both directions: too few slots lead to longer urgent scan waiting times, while too many slots crowd out elective appointments. Configurations with 15 or more urgent slots exhibit rapidly increasing variance, confirming the approach towards instability.
+
+\begin{table}[ht]
+\centering
+\caption{Effect of urgent slot count on OV for Strategy 3.}
+\label{tab:urgent_effect}
+\small
+\begin{tabular}{ccc}
+\toprule
+\headerrow \textbf{Urgent Slots} & \textbf{Best OV (S3)} & \textbf{Variance level} \\
+\midrule
+10 & 0.4427 & Very low \\
+\altrow 11 & \textbf{0.4311} & Very low \\
+12 & 0.4378 & Low \\
+\altrow 13 & 0.4357 & Low \\
+14 & 0.4559 & Medium \\
+\altrow 15 & 0.4782 & Medium-high \\
+16 & 0.5507 & High \\
+\altrow 17 & 0.7383 & Very high \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Observation 3 — Appointment rules have minimal impact}
+
+Within any given strategy and urgent slot count, the four appointment scheduling rules produce very similar objective values. For the best configuration (S3-U11), the OV ranges only from 0.4311 (Rule~4) to 0.4344 (Rule~3) --- a spread of just 0.0033.
+
+\begin{table}[ht]
+\centering
+\caption{Best overall design per appointment rule.}
+\label{tab:per_rule}
+\small
+\begin{tabular}{clcc}
+\toprule
+\headerrow \textbf{Rule} & \textbf{Description} & \textbf{Best Design} & \textbf{Best OV} \\
+\midrule
+1 & Plain FCFS      & S3-U11-R1 & 0.4325 \\
+\altrow 2 & Bailey-Welch ($K=2$) & S3-U11-R2 & 0.4321 \\
+3 & Blocking ($B=2$) & S3-U11-R3 & 0.4344 \\
+\altrow 4 & Benchmarking ($k_\sigma=0.5$) & S3-U11-R4 & 0.4311 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Comparative Analysis}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Statistical Comparison of Top Designs}
+
+To determine whether differences between top-performing designs are statistically significant, we examine whether their 95\% confidence intervals overlap. Two designs are considered significantly different if their confidence intervals do not overlap.
+
+Comparing the top 4 designs (all S3-U11, Table~\ref{tab:top4_ci}):
+
+\begin{table}[ht]
+\centering
+\caption{Confidence intervals for the top 4 designs.}
+\label{tab:top4_ci}
+\small
+\begin{tabular}{lcccc}
+\toprule
+\headerrow \textbf{Design} & $\bar{Y}$ & $\epsilon$ & \textbf{CI lower} & \textbf{CI upper} \\
+\midrule
+S3-U11-R4 & 0.4311 & 0.0040 & 0.4271 & 0.4352 \\
+\altrow S3-U11-R2 & 0.4321 & 0.4040 & 0.4280 & 0.4361 \\
+S3-U11-R1 & 0.4325 & 0.0040 & 0.4284 & 0.4365 \\
+\altrow S3-U11-R3 & 0.4344 & 0.0041 & 0.4304 & 0.4385 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All four confidence intervals overlap substantially. We therefore \textbf{cannot statistically distinguish} between these four designs based on the current sample. All S3-U11 configurations perform equivalently well on the primary objective.
+
+\subsection{Comparison Between Strategies}
+
+The performance gap between Strategy~3 and the alternatives is \textbf{statistically significant}:
+
+\begin{itemize}
+    \item Comparing the best S3 design (S3-U11-R4, CI: $[0.4271;\, 0.4352]$) against the best S1 design (S1-U11-R2, CI: $[0.4491;\, 0.4566]$): the entire CI of S3 lies below the entire CI of S1, confirming that Strategy~3 is statistically superior to Strategy~1.
+    \item The superiority over Strategy~2 is even clearer: the best S2 design (S2-U13-R4, CI: $[0.5225;\, 0.5371]$) lies entirely above the entire top-16 cluster of Strategy~3 designs.
+\end{itemize}
+
+\subsection{Recommended Configuration}
+
+\begin{recbox}
+Recommended configuration: \textbf{Strategy 3 with 11 urgent slots} (any appointment rule). \\[4pt]
+If a single rule must be selected: \textbf{Rule 4 (Benchmarking)} achieves the lowest point estimate ($\bar{Y} = 0.4311$).
+\end{recbox}
+
+This recommendation represents a change from the current schedule (Strategy~1, 14 urgent slots, Rule~1), which scores $\bar{Y} \approx 0.488$ --- approximately \textbf{11\% worse} than the best design.
+
+\subsection{Secondary Objectives}
+
+The assignment specifies that elective scan waiting time and overtime serve as secondary objectives for tiebreaking. Since the top-performing S3-U11 designs are statistically indistinguishable on the primary objective, a formal tiebreak using secondary objectives could be applied in future work.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Conclusion}
+% ─────────────────────────────────────────────────────────────────────────────
+
+This study evaluated 96 appointment schedule configurations for an outpatient radiology department, covering three timing strategies, eight urgent slot counts (10--17), and four appointment rules. A statistically rigorous simulation framework was applied, including Welch's warm-up analysis, the Batch Means Method ($L=22$, $M=80$), and variance reduction via antithetic variates.
+
+The main conclusions are:
+
+\begin{enumerate}
+    \item \textbf{Strategy 3 is clearly the best timing strategy.} Placing an urgent slot after every 6 consecutive elective slots produces consistently lower waiting times than end-of-block placement (Strategy~1) or even distribution (Strategy~2). The difference is statistically significant.
+
+    \item \textbf{11 urgent slots is the optimal capacity allocation.} This number minimizes the weighted combination of elective appointment waiting time and urgent scan waiting time. Fewer slots increase urgent patient delays; more slots create appointment backlog for elective patients. Configurations with 16 or more urgent slots exhibit high instability.
+
+    \item \textbf{Appointment rules have negligible impact on the primary objective.} All four rules perform nearly identically within the optimal S3-U11 configuration. The confidence intervals of the top 4 designs overlap, confirming no statistically significant difference.
+
+    \item \textbf{The recommended configuration is S3-U11-R4} (Benchmarking rule), with an estimated objective value of $\bar{Y} = 0.4311$ --- an \textbf{11\% improvement} over the current schedule.
+\end{enumerate}
+
+Next steps to complete the analysis include: formal tiebreaking on secondary objectives (elective scan waiting time and overtime) for the top designs, and optionally a Ranking \& Selection procedure (e.g., Dudewicz-Dalal) to formally confirm the best design with a probability-of-correct-selection guarantee.
+
+\end{document}
