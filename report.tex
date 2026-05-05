@@ -86,6 +86,17 @@
     {\large Academic Year 2025--2026}\\[4pt]
     {\large Prof.\ Broos Maenhout}
 
+    \vspace{1.2cm}
+    {\large \textbf{Group [GROEPSNUMMER]}}\\[0.5cm]
+    \begin{tabular}{ll}
+        [Naam 1] & [Studentnummer] \\
+        [Naam 2] & [Studentnummer] \\
+        [Naam 3] & [Studentnummer] \\
+        [Naam 4] & [Studentnummer] \\
+        [Naam 5] & [Studentnummer] \\
+        [Naam 6] & [Studentnummer] \\
+    \end{tabular}
+
     \vfill
     {\normalsize Ghent University --- Master of Science in Management of Operations}
 \end{titlepage}
@@ -99,20 +110,101 @@
 
 \subsection{System Description}
 
-In this project, we analyze and improve the performance of an outpatient radiology department using discrete-event simulation. The department currently uses a cyclic appointment schedule with 146 elective slots and a variable number of urgent slots. Elective patients arrive according to appointments (with potential unpunctuality and no-shows), while urgent patients arrive unannounced throughout the day. The goal of this study is to minimize the weighted waiting times for both urgent and elective patients by redesigning the capacity distribution (urgent vs.\ elective slots) and the timing of urgent slots.
+This study considers the redesign of the cyclic appointment schedule for a single-server outpatient radiology department. The department serves two patient types: \textbf{elective} patients, who make appointments in advance, and \textbf{urgent} patients, who arrive without an appointment and must be treated on the same day.
 
-The simulation operates on a weekly cyclic schedule. The department is open Monday to Saturday, with Thursday and Saturday being half-day sessions. Each day is divided into time slots of 15~minutes. Resources (nurses, doctors) are assumed to be always available.
+\textbf{Schedule structure.} The planning horizon repeats weekly. The department is open Monday through Saturday; Thursday and Saturday are half-day sessions. Each day is divided into time slots of 15~minutes — the expected scan duration for an elective patient. The current schedule contains 146 elective slots and 14 urgent slots per week. Resources (nurses, doctors) are assumed to be always available.
+
+\textbf{Elective patients.} Elective patients call the front desk (open Monday--Friday, 08:00--17:00) to request an appointment. Inter-arrival times between phone calls follow a memoryless negative-exponential distribution, with the number of daily calls following a Poisson distribution ($\lambda_e = 28.345$ patients/day). Patients are assigned to the next available elective slot on a first-come, first-served basis. At the moment of the appointment, patients may arrive early or late: unpunctuality follows a $\mathcal{N}(0,\, 2.5~\text{min})$ distribution. The probability of a no-show is 2\%. Elective scan durations follow a $\mathcal{N}(15~\text{min},\, 3~\text{min})$ distribution.
+
+\textbf{Urgent patients.} Urgent patients arrive unannounced during opening hours according to a negative-exponential inter-arrival distribution, with $\lambda_u = 2.5$ patients per full day and $\lambda_u = 1.25$ per half day. They are assigned to the next available urgent slot. If no slot remains on that day, they are served in overtime after all elective patients have been treated. Urgent patients have variable scan durations depending on scan type; Table~\ref{tab:urgent_scan} summarises the distribution.
+
+\begin{table}[ht]
+\centering
+\caption{Scan duration distribution for urgent patients by scan type.}
+\label{tab:urgent_scan}
+\small
+\begin{tabular}{lccc}
+\toprule
+\headerrow \textbf{Scan type} & \textbf{Frequency} & \textbf{Mean (min)} & \textbf{Std.\ dev.\ (min)} \\
+\midrule
+Brain              & 70\% & 15.0 & 2.5 \\
+\altrow Spine --- Lumbar vertebrae  & 10\% & 17.5 & 1.0 \\
+Spine --- Cervical vertebrae & 10\% & 22.5 & 2.5 \\
+\altrow Abdomen MRI         &  5\% & 30.0 & 1.0 \\
+Others             &  5\% & 30.0 & 4.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Performance measures.} Four performance measures are tracked: (1)~elective appointment waiting time ($Wt_e^{app}$): time between phone call and appointment; (2)~elective scan waiting time ($Wt_e^{scan}$): time between physical arrival and scan start; (3)~urgent scan waiting time ($Wt_u^{scan}$): time between urgent patient arrival and scan start; (4)~daily overtime. The primary objective is to minimise the weighted sum:
+\[
+    \text{Minimise} \quad w_e \cdot \overline{Wt_e^{app}} + w_u \cdot \overline{Wt_u^{scan}}
+    \quad \text{with} \quad w_e = \tfrac{1}{168}, \quad w_u = \tfrac{1}{9}
+\]
+Elective scan waiting time and overtime serve as \textit{secondary} objectives, used only to break ties between statistically equivalent configurations.
+
+\subsection{Research Hypotheses}
+
+To evaluate the impact of the three design factors on system performance, we formulate the following research hypotheses:
+
+\textbf{Main hypothesis:}
+\begin{itemize}
+    \item $H_{0_1}$: The current appointment schedule (Strategy~1, 14 urgent slots, Rule~1) minimises the primary objective function; no alternative configuration performs significantly better.
+    \item $H_{A_1}$: At least one alternative configuration exists that achieves a significantly lower weighted waiting time than the current schedule.
+\end{itemize}
+
+\textbf{Effect of timing strategy:}
+\begin{itemize}
+    \item $H_{0_2}$: The timing strategy does not significantly affect the primary objective value; all three strategies produce equivalent weighted waiting times.
+    \item $H_{A_2}$: At least one timing strategy achieves a significantly lower primary objective value. Specifically, distributing urgent slots more evenly throughout the session (Strategies~2 and~3) is expected to reduce both urgent scan waiting time and elective appointment waiting time compared to end-of-block placement (Strategy~1).
+\end{itemize}
+
+\textbf{Effect of urgent slot capacity:}
+\begin{itemize}
+    \item $H_{0_3}$: The number of urgent slots does not significantly affect the primary objective; performance is equivalent across the range of 10--17 slots.
+    \item $H_{A_3}$: There exists an optimal number of urgent slots that minimises the primary objective. Configurations with too few slots increase urgent scan waiting times; configurations with too many slots displace elective appointments and increase elective waiting times.
+    \item $H_{0_4}$: Configurations with 18 or more urgent slots are operationally stable and comparable to configurations with fewer slots.
+    \item $H_{A_4}$: Configurations with 18 or more urgent slots are systemically unstable due to capacity saturation and must be excluded from the experimental design.
+\end{itemize}
+
+\textbf{Effect of appointment scheduling rule:}
+\begin{itemize}
+    \item $H_{0_5}$: The appointment scheduling rule does not significantly affect the primary objective value.
+    \item $H_{A_5}$: At least one appointment rule achieves a significantly different primary objective value. The rules are expected to primarily affect the secondary objective (elective scan waiting time) through their impact on punctuality-induced congestion, with negligible effect on the primary objective.
+\end{itemize}
 
 \subsection{Overview of Research Test Design}
 
-The study evaluates the system by varying three main factors:
-\begin{enumerate}[leftmargin=2cm]
-    \item \textbf{Urgent Slot Capacity:} Ranging between 10 and 17 slots. Configurations with 18 or more urgent slots were excluded from the experimental design following our preliminary analysis, which revealed that these configurations push the system beyond its capacity limits (see Section~\ref{sec:variance}).
-    \item \textbf{Timing Strategy:} Three strategies for distributing urgent slots over the day/week.
-    \item \textbf{Appointment Rules:} Four different single-pass appointment scheduling rules.
-\end{enumerate}
+To test the above hypotheses, we adopt a \textbf{full-factorial screening design} across three factors:
 
-Our analysis proceeds through several statistical phases: establishing steady-state behaviour (warm-up), determining batch means parameters for independent sampling, applying variance reduction (Antithetic Variables), executing a full-factorial screening design across all 96 valid configurations, and a comparative analysis to identify the best system configuration.
+\begin{table}[ht]
+\centering
+\caption{Factors and levels in the experimental design.}
+\label{tab:factors}
+\small
+\begin{tabular}{>{\bfseries}p{3.2cm} p{9.8cm} c}
+\toprule
+\headerrow \textbf{Factor} & \textbf{Levels} & \textbf{\#} \\
+\midrule
+Timing Strategy &
+  \textit{Strategy 1}: urgent slots placed at end of each morning/afternoon block \newline
+  \textit{Strategy 2}: urgent slots evenly distributed over the day \newline
+  \textit{Strategy 3}: one urgent slot after every 6 consecutive elective slots & 3 \\
+\altrow Urgent Slot Capacity & 10, 11, 12, 13, 14, 15, 16, 17 slots per week & 8 \\
+Appointment Rule &
+  \textit{Rule 1}: Plain FCFS \newline
+  \textit{Rule 2}: Bailey-Welch ($K=2$) \newline
+  \textit{Rule 3}: Blocking ($B=2$) \newline
+  \textit{Rule 4}: Benchmarking ($k_\sigma = 0.5$) & 4 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This yields $3 \times 8 \times 4 = \mathbf{96}$ configurations. A full-factorial design is chosen over a fractional design because the total number of configurations is computationally tractable ($\leq$100) and because we wish to detect potential interaction effects between strategy and slot count without aliasing.
+
+Configurations with 18 or more urgent slots are excluded from the design: preliminary analysis using antithetic variates revealed that these configurations are systemically unstable (see Section~\ref{sec:variance}).
+
+The analysis proceeds through the following phases: (1)~steady-state determination via Welch's method, (2)~independent sampling via the Batch Means Method, (3)~variance reduction via Antithetic Variables, (4)~full-factorial screening of all 96 designs, and (5)~comparative analysis and tiebreaking using secondary objectives.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Statistical Analysis \& Warm-up}
@@ -179,9 +271,7 @@ To obtain more accurate estimates without increasing computational burden, we im
 \[
     Y_k = \frac{X_k + X'_k}{2}
 \]
-the overall variance is substantially reduced.
-
-Table~\ref{tab:bmm_antithetic} shows the BMM results for the same 11 representative designs after applying antithetic variates.
+the overall variance is substantially reduced. Table~\ref{tab:bmm_antithetic} presents the results for the same 11 representative designs after applying antithetic variates.
 
 \begin{table}[ht]
 \centering
