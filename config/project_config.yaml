@@ -1,0 +1,86 @@
+project:
+  name: "Reorganisation of an outpatient radiology department"
+  course: "Simulation Modelling and Analysis (F000941)"
+  academic_year: "2025-2026"
+
+calendar:
+  day_names: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+  full_days: [0, 1, 2, 4]
+  half_days: [3, 5]
+  closed_days: [6]
+  day_minutes: 1440
+  opening:
+    full_day: {start: 480, lunch_start: 720, lunch_end: 780, end: 1020}
+    half_day: {start: 480, end: 720}
+  slot_length_minutes: 15
+  current_schedule:
+    elective_slots: 146
+    urgent_slots: 14
+  urgent_slot_range: [10, 20]
+
+arrival_processes:
+  elective_calls:
+    days: [0, 1, 2, 3, 4]
+    start_minute: 480
+    end_minute: 1020
+    lambda_per_day: 28.345
+  urgent_arrivals:
+    lambda_full_day: 2.5
+    lambda_half_day: 1.25
+
+elective:
+  no_show_probability: 0.02
+  punctuality:
+    distribution: normal
+    mean_minutes: 0.0
+    sd_minutes: 2.5
+  duration:
+    distribution: truncated_normal_positive
+    mean_minutes: 15.0
+    sd_minutes: 3.0
+
+urgent:
+  scan_types:
+    - {name: brain, probability: 0.70, mean_minutes: 15.0, sd_minutes: 2.5}
+    - {name: spine_lumbar, probability: 0.10, mean_minutes: 17.5, sd_minutes: 1.0}
+    - {name: spine_cervical, probability: 0.10, mean_minutes: 22.5, sd_minutes: 2.5}
+    - {name: abdomen_mri, probability: 0.05, mean_minutes: 30.0, sd_minutes: 1.0}
+    - {name: others, probability: 0.05, mean_minutes: 30.0, sd_minutes: 4.5}
+
+appointment_rules:
+  bailey_welch_k: 2
+  blocking_b: 2
+  benchmark_k_sigma: 0.5
+
+objective:
+  elective_appointment_wait_weight: 0.005952380952380952
+  urgent_scan_wait_weight: 0.1111111111111111
+
+randomness:
+  base_seed: 42
+  streams:
+    - elective_calls
+    - urgent_arrivals
+    - no_shows
+    - punctuality
+    - elective_durations
+    - urgent_scan_type
+    - urgent_durations
+
+run_modes:
+  quick:
+    warmup_weeks: 2
+    batch_size_weeks: 2
+    batches: 3
+    antithetic: true
+    patient_records: true
+    urgent_slots: [10, 14, 20]
+    appointment_rules: [1, 4]
+  full:
+    warmup_weeks: 60
+    batch_size_weeks: 80
+    batches: 22
+    antithetic: true
+    patient_records: false
+    urgent_slots: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+    appointment_rules: [1, 2, 3, 4]

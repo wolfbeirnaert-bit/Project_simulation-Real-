@@ -19,3 +19,12 @@ venv/
 # IDEs
 .vscode/
 .idea/
+
+# Agentic SMA pipeline generated output
+outputs/*
+!outputs/.gitkeep
+report_assets/generated/*
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.matplotlib/

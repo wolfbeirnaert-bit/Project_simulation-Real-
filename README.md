@@ -1,6 +1,6 @@
 # Reorganisation of an Outpatient Radiology Department
 
-This repository contains the simulation models, data analysis scripts, and final report for the **Simulation Modelling and Analysis (2025-2026)** course project. 
+This repository contains the simulation models, data analysis scripts, and final report assets for the **Simulation Modelling and Analysis (2025-2026)** course project.
 
 The goal of this study is to analyze and optimize the performance of an outpatient radiology department using discrete-event simulation. By redesigning the capacity distribution (urgent vs. elective slots) and the timing of urgent slots, we aim to minimize the weighted waiting times for both urgent and elective patients.
 
@@ -18,15 +18,20 @@ The goal of this study is to analyze and optimize the performance of an outpatie
 - `report.tex`: The LaTeX source code for the final simulation report.
 - `Simulation_Project_Report.md`: A markdown version of the final simulation report.
 - `*.csv`: Output data files containing the results of the simulation sweeps and variance reduction analysis.
+- `sma_sim/` and `sma_agents/`: The newer reproducible Python pipeline used for the 132-design screening.
+- `outputs/20260505_221519/`: Latest full run output folder.
 
 ## 🚀 Key Findings & Recommendations
 
-After evaluating 96 appointment schedule configurations across three timing strategies, eight urgent slot counts (10–17), and four appointment rules, the main conclusions are:
+After evaluating all 132 required appointment schedule configurations across three timing strategies, eleven urgent slot counts (10-20), and four appointment rules, the main conclusions are:
 
-1. **Optimal Timing Strategy:** Strategy 3 (placing an urgent slot after every 6 consecutive elective slots) consistently outperforms the alternatives.
-2. **Optimal Capacity:** 11 urgent slots is the ideal capacity. Configurations with 16 or more urgent slots show severe systemic instability.
-3. **Appointment Rules:** Have negligible impact on the primary objective.
-4. **Recommended Configuration:** **Strategy 3 with 11 urgent slots (Rule 4 / Benchmarking)**, representing an 11% improvement over the current baseline schedule.
+1. **Best Timing Region:** Strategy 3 (placing an urgent slot after every 6 consecutive elective slots) gives the strongest overall region.
+2. **Best Capacity Region:** 13-14 urgent slots is the best compromise region. The lowest point estimate is S3-U13-R4.
+3. **High Urgent Counts:** Urgent slot counts 18-20 were tested, not silently excluded. All 36 corresponding designs were flagged as unstable or precision-problematic.
+4. **Appointment Rules:** Rule 4 gives the lowest point estimate in the best region, but appointment-rule effects are smaller than the timing and urgent-capacity effects.
+5. **Recommended Operating Region:** **Strategy 3 with 13-14 urgent slots**, with S3-U13-R4 as the lowest point estimate and S3-U14-R4 as a nearby trade-off option with lower urgent waiting.
+
+For the new pipeline workflow and commands, see `README_AGENTIC_PIPELINE.md`.
 
 ## 📄 Generating the Report
 
