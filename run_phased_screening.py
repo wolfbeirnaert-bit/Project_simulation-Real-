@@ -71,7 +71,8 @@ def evaluate_design(strategy, num_urgent, rule):
         "Avg_OV": round(d_bar, 4),
         "Var": round(s2, 6),
         "StdDev": round(s, 4),
-        "Half_Width": round(eps, 4)
+        "Half_Width": round(eps, 4),
+        "Raw_Dk": Dk
     }
 
 def print_result(res):
@@ -96,8 +97,10 @@ def main():
     print("  -> Testing U from 10 to 17 to find the capacity trend.")
     
     phase1b_results = []
+    raw_data_dict = {}
     for u in range(10, 18):
         res = evaluate_design(1, u, 1)
+        raw_data_dict[res["Design"]] = res.pop("Raw_Dk")
         phase1b_results.append(res)
         print_result(res)
         
@@ -114,6 +117,7 @@ def main():
     for s in range(1, 4):
         for r in range(1, 5):
             res = evaluate_design(s, 14, r)
+            raw_data_dict[res["Design"]] = res.pop("Raw_Dk")
             phase1c_results.append(res)
             print_result(res)
             
@@ -143,6 +147,7 @@ def main():
         print(f"[{i:2d}/{total}] S{s}-U{u}-R{r}  |  elapsed {elapsed:5.0f}s  ETA {eta:5.0f}s", end="\r")
         
         res = evaluate_design(s, u, r)
+        raw_data_dict[res["Design"]] = res.pop("Raw_Dk")
         final_results.append(res)
         
     print("\n\nPhase 2 Complete. Saving results...")
@@ -159,6 +164,46 @@ def main():
     print("-" * 40)
     for _, row in df_results.head(10).iterrows():
         print(f"{int(row['Rank']):<5} {row['Design']:<12} {row['Avg_OV']:>8.4f} {row['Half_Width']:>11.4f}")
+
+    print("\n=========================================================")
+    print("      STATISTICAL SIGNIFICANCE (PAIRED T-TESTS)          ")
+    print("=========================================================")
+    print("Testing if differences between designs are significant (95% CI on Difference)")
+    
+    def paired_t_test(design_a, design_b):
+        Dk_a = raw_data_dict[design_a]
+        Dk_b = raw_data_dict[design_b]
+        diffs = Dk_a - Dk_b
+        d_bar_diff = float(np.mean(diffs))
+        s2_diff = float(np.var(diffs, ddof=1))
+        eps_diff = t_crit(L - 1) * math.sqrt(s2_diff / L)
+        ci_low = d_bar_diff - eps_diff
+        ci_high = d_bar_diff + eps_diff
+        significant = not (ci_low <= 0 <= ci_high)
+        
+        print(f"\n  Comparison: {design_a} vs {design_b}")
+        print(f"  Mean Diff : {d_bar_diff:.4f}")
+        print(f"  95% CI    : [{ci_low:.4f}, {ci_high:.4f}]")
+        if significant:
+            if d_bar_diff < 0:
+                print(f"  Result    : SIGNIFICANT. {design_a} is better.")
+            else:
+                print(f"  Result    : SIGNIFICANT. {design_b} is better.")
+        else:
+            print(f"  Result    : NOT SIGNIFICANT. Statistically tied.")
+
+    # 1. Is the #1 design significantly better than the #2 design?
+    rank1_design = df_results.iloc[0]["Design"]
+    rank2_design = df_results.iloc[1]["Design"]
+    print(f"\n1. Is Rank 1 ({rank1_design}) significantly better than Rank 2 ({rank2_design})?")
+    paired_t_test(rank1_design, rank2_design)
+    
+    # 2. Is Strategy 3 significantly better than Strategy 1?
+    print("\n2. Is Strategy 3 significantly better than Strategy 1? (Using U=14, R=1 baseline)")
+    if "S3-U14-R1" in raw_data_dict and "S1-U14-R1" in raw_data_dict:
+        paired_t_test("S3-U14-R1", "S1-U14-R1")
+    else:
+        print("  Data for S3-U14-R1 and S1-U14-R1 not available in this run.")
 
     total_time = time.time() - start_time
     print(f"\nTotal script execution time: {total_time:.1f}s")
