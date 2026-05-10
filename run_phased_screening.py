@@ -110,18 +110,20 @@ def main():
     
     # --- PHASE 1C: Qualitative Screening (S and R) ---
     print("PHASE 1C: Qualitative Screening on S and R")
-    print("  -> Anchor: U = 14 (Stable capacity baseline)")
+    print("  -> Anchors: U = 11 and U = 14 (Testing multiple capacity baselines)")
     print("  -> Testing all Strategies (1,2,3) across all Rules (1,2,3,4) to identify dominated categories.")
     
     phase1c_results = []
-    for s in range(1, 4):
-        for r in range(1, 5):
-            res = evaluate_design(s, 14, r)
-            raw_data_dict[res["Design"]] = res.pop("Raw_Dk")
-            phase1c_results.append(res)
-            print_result(res)
+    for anchor_u in [11, 14]:
+        print(f"\n  --- Testing at Anchor U={anchor_u} ---")
+        for s in range(1, 4):
+            for r in range(1, 5):
+                res = evaluate_design(s, anchor_u, r)
+                raw_data_dict[res["Design"]] = res.pop("Raw_Dk")
+                phase1c_results.append(res)
+                print_result(res)
             
-    print("  -> CONCLUSION: Rule 3 (Blocking) consistently performs worst across multiple strategies.")
+    print("\n  -> CONCLUSION: Rule 3 (Blocking) consistently performs worst across multiple strategies AND capacity levels.")
     print("  -> DECISION: Dropping Rule 3.")
     print("  -> Surviving R: [1, 2, 4]")
     print("  -> Surviving S: [1, 2, 3]\n")
